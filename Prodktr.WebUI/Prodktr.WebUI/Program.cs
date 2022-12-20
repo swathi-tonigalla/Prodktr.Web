@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Prodktr.WebUI.Common;
 using Prodktr.WebUI.Models;
 using System.Text;
 
@@ -17,7 +18,7 @@ builder.Services.AddCors();
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalConnectionString")));
 
 //Authentication scheme spec
-var key = Encoding.UTF8.GetBytes("MyJWTtokenforProdktr");
+var key = Encoding.UTF8.GetBytes(GlobalConstant.JWT_Secret);
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
