@@ -12,7 +12,7 @@ namespace Prodktr.WebUI.Models
         public string Email { get; set; }
         public string Password { get; set; }
         public bool AgreeTerm { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool RememberMe { get; set; }
         [NotMapped]

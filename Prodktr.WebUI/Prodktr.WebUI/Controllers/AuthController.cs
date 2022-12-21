@@ -59,7 +59,8 @@ namespace dotnet_core.Controllers
 
                 //We will need the user role to access the protected area
                 user.Role = await _context.Roles.FirstOrDefaultAsync(x => x.Id == user.RoleId);
-
+                user.Role.CreatedAt = DateTime.Now;
+                user.Role.UpdatedAt = DateTime.Now;
                 //Send welcome email after sign up
                 await Utils.SendWelcomeEmail(user.Fullname, user.Email);
 
@@ -76,7 +77,54 @@ namespace dotnet_core.Controllers
                return BadRequest(ex);
            }
        }
+        [HttpPost("sign-in")]
+        public async Task<ActionResult<User>> SignIn([FromBody] User user)
+        {
+            try
+            {
+                var dbuser = await _context.Users
+                    .Include(x => x.Role)
+                    .FirstOrDefaultAsync(x => x.Email == user.Email);
+                if (dbuser == null) return NotFound();
+                // Verify password 
+                if (Utils.Verify(user.Password, dbuser.Password))
+                {
+                    dbuser.Token = Utils.GenerateJWTToken(dbuser.Id, user.RememberMe);
+                    var response = Ok(dbuser);
+                    return response;
+                }
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+        [HttpPost("send-recovery-link")]
+        public async Task<IActionResult> SendRecoveryLink([FromBody] User user)
+        {
+            try
+            {
+                var dbuser = await _context.Users
+                    .Include(x => x.Role)
+                    .FirstOrDefaultAsync(x => x.Email == user.Email);
+                if (dbuser != null)
+                {
+                    //This will generate a token that will be available for 24h.
+                    string recoveryToken = Utils.GenerateJWTTokenByEmail(dbuser.Email);
+                    //With this link that have in param the token the user can access
+                    //The password update page if the token still available
+                    string recoveryLink = $"{user.AppOriginUrl}/auth/reset-password/{recoveryToken}";
+                    bool isSent = await Utils.SendRecoveryLinkEmail(recoveryLink, dbuser.Fullname, dbuser.Email);
+                    if (isSent) return Created("", new { recoveryToken, dbuser.Email });
+                }
+                return NotFound();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
 
-      
     }
 }
